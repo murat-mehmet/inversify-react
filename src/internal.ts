@@ -105,6 +105,7 @@ function ensureAcceptContext(target: ComponentClass) {
 type PropertyOptions = Readonly<{
 	isOptional?: boolean;
 	defaultValue?: unknown;
+	named?: string;
 }>;
 
 function createProperty(target: Component, name: string, type: interfaces.ServiceIdentifier<unknown>, options: PropertyOptions) {
@@ -121,14 +122,20 @@ function createProperty(target: Component, name: string, type: interfaces.Servic
 				if (options.isOptional)
 				{
 					if (container.isBound(type)) {
-						value = container.get(type);
+						if (options.named != null)
+						    value = container.getNamed(type, options.named);
+						else
+						    value = container.get(type);
 					} else {
 						value = options.defaultValue;
 					}
 				}
 				else
 				{
-					value = container.get(type);
+                    if (options.named != null)
+                        value = container.getNamed(type, options.named);
+                    else
+                        value = container.get(type);
 				}
 
 				getter = administration.properties[name] = () => value;

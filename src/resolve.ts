@@ -13,6 +13,19 @@ interface ResolveOptionalDecorator {
 	(target: any, name: string, descriptor?: any): any;
 }
 
+interface ResolveNamedDecorator {
+	<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, name: string): (target: any, name: string, descriptor?: any) => any;
+	(target: any, name: string, descriptor?: any): any;
+
+	optional: ResolveNamedOptionalDecorator;
+}
+
+interface ResolveNamedOptionalDecorator {
+	<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, name: string, defaultValue?: T): (target: any, name: string, descriptor?: any) => any;
+
+	(target: any, name: string, descriptor?: any): any;
+}
+
 function applyResolveDecorator(target: any, name: string, type: interfaces.ServiceIdentifier<unknown>, options: PropertyOptions) {
 	ensureAcceptContext(target.constructor);
 
@@ -73,5 +86,43 @@ resolve.optional = <ResolveOptionalDecorator>function resolveOptional<T>(...args
 	}
 }
 
-export { resolve };
+const resolveNamed = <ResolveNamedDecorator>function resolveNamed<T>(...args: unknown[]) {
+	if (typeof args[1] === 'string' && args.length === 3) {
+		const [target, name, descriptor] = args;
+		const type = getDesignType(target, name);
+
+		// decorator
+		return applyResolveDecorator(target, name, type, { isOptional: true });
+	} else {
+		const serviceIdentifier = args[0] as interfaces.ServiceIdentifier<T>;
+		const named = args[1] as string | undefined;
+
+		// factory
+		return function(target: any, name: string, descriptor?: any) {
+			return applyResolveDecorator(target, name, serviceIdentifier, {named});
+		};
+	}
+};
+
+resolveNamed.optional = <ResolveNamedOptionalDecorator>function resolveNamedOptional<T>(...args: unknown[]) {
+	const targetType = typeof args[0];
+	if (typeof args[1] === 'string' && targetType != 'symbol' && targetType != 'string') {
+		const [target, name, descriptor] = args;
+		const type = getDesignType(target, name);
+
+		// decorator
+		return applyResolveDecorator(target, name, type, { isOptional: true });
+	} else {
+		const serviceIdentifier = args[0] as interfaces.ServiceIdentifier<T>;
+		const named = args[1] as string | undefined;
+		const defaultValue = args[2] as T | undefined;
+
+		// factory
+		return function(target: any, name: string, descriptor?: any) {
+			return applyResolveDecorator(target, name, serviceIdentifier, {named, isOptional: true, defaultValue });
+		};
+	}
+}
+
+export { resolve, resolveNamed };
 export default resolve;

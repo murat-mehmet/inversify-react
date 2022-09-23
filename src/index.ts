@@ -1,4 +1,4 @@
-export { resolve } from './resolve';
+export { resolve, resolveNamed } from './resolve';
 export { Provider, ProviderProps } from './provider';
 export {
     useAllInjections,

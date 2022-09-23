@@ -1,5 +1,5 @@
 {
-  "name": "inversify-react",
+  "name": "mm-inversify-react",
   "version": "1.0.2",
   "description": "Components and decorators to connect react with inversify.",
   "main": "./dist/index.js",
