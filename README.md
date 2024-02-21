@@ -21,8 +21,10 @@ Table of Contents
     + [useContainer](#usecontainer)
     + [useAllInjections](#useallinjections)
 * [React component decorators (for classes)](#react-component-decorators--for-classes-)
-    + [@resolve](#-resolve)
-    + [@resolve.optional](#-resolveoptional)
+    + [@resolve](#resolve)
+    + [@resolve.optional](#resolveoptional)
+    + [@resolve.all](#resolveall)
+    + [@resolve.optiona.all](#resolveoptionalall)
 * [Notes, tips](#notes--tips)
 
 
@@ -248,6 +250,48 @@ class ChildComponent extends React.Component {
 constructor(props: {}, context: {}) {
     super(props, context);
     console.log(this.foo.name);
+}
+```
+
+### @resolve.all
+```ts
+@resolve.all('Foo')
+private readonly foo!: Foo[];
+```
+* tries to resolve all services from container, fails if no services are bound to given service identifier
+* requires `reflect-metadata` and `emitDecoratorMetadata`, but __cannot be used without explicitly specifying service identifier__
+
+`@resolve.all(serviceId)`
+* obtains services from container passed down in the React tree
+
+
+```ts
+class ChildComponent extends React.Component {
+    @resolve.all(Baz)
+    private readonly all!: Baz[];
+    
+    ...
+}
+```
+
+### @resolve.optional.all
+```ts
+@resolve.optional.all('Foo')
+private readonly foo!: Foo[];
+```
+* tries to resolve all services from container, returns empty array if none are registered
+* requires `reflect-metadata` and `emitDecoratorMetadata`, but __cannot be used without explicitly specifying service identifier__
+
+`@resolve.optional.all(serviceId)`
+* obtains services from container passed down in the React tree
+
+
+```ts
+class ChildComponent extends React.Component {
+    @resolve.optional.all(Baz)
+    private readonly allorempty!: Baz[];
+    
+    ...
 }
 ```
 
