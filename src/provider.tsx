@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useContext, useState } from 'react';
 import { interfaces } from 'inversify';
-import { InversifyReactContext } from './internal';
+import { InversifyReactContext, isDev } from './internal';
 
 type ProviderProps = Readonly<{
-    // Inversify container (or container factory) to be used for that React subtree (children of Provider)
-    container: interfaces.Container | (() => interfaces.Container);
+    // Inversify container to be used for that React subtree (children of Provider)
+    container: interfaces.Container;
 
     // Hierarchical DI configuration:
     // standalone Provider will keep container isolated,
@@ -15,6 +15,9 @@ type ProviderProps = Readonly<{
     standalone?: boolean;
 
     children?: React.ReactNode;
+
+    // container update will be allowed in dev
+    dev?: boolean;
 
     // TODO:ideas: more callbacks?
     //  ---
@@ -41,21 +44,11 @@ function isContainer(x: ProviderProps['container']): x is interfaces.Container {
 
 const Provider: React.FC<ProviderProps> = ({
     children,
-    container: containerProp,
-    standalone: standaloneProp = false
+    container,
+    standalone: standaloneProp = false,
+    dev = false,
 }) => {
-    // #DX: guard against `container` prop change and warn with explicit error
-    const [container] = useState(containerProp);
-    // ...but only if it's an actual Container and not a factory function (factory can be a new function on each render)
-	if (isContainer(containerProp) && containerProp !== container) {
-		throw new Error(
-			'Changing `container` prop (swapping container in runtime) is not supported.\n' +
-			'If you\'re rendering Provider in some list, try adding `key={container.id}` to the Provider.\n' +
-			'More info on React lists:\n' +
-			'https://reactjs.org/docs/lists-and-keys.html#keys\n' +
-			'https://reactjs.org/docs/reconciliation.html#recursing-on-children'
-		);
-	}
+    isDev.v = dev;
 
     // #DX: guard against `standalone` prop change and warn with explicit error
     const [standalone] = useState(standaloneProp);

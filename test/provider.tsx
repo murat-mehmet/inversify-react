@@ -7,7 +7,7 @@ import * as renderer from 'react-test-renderer';
 import { resolve, Provider } from '../src';
 
 @injectable()
-class Foo { 
+class Foo {
     name = 'foo';
 }
 
@@ -100,49 +100,5 @@ describe('hierarchy of containers', () => {
         }).toThrowError('No matching bindings found for serviceIdentifier: Foo');
 
         expect(innerContainer.parent).toBeNull();
-    });
-});
-
-describe('Provider DX', () => {
-    // few tests to check/show that Provider component produces DX errors and other minor stuff
-
-    test('"container" prop can be a factory function', () => {
-        // simple and uniform approach to define Container for Provider,
-        // instead of useState in functional component or field in class component
-
-        // also test that it gets called only once
-        const spy = jest.fn();
-        let renderCount = 0;
-        let forceUpdate = () => {};
-
-        const FunctionalRootComponent: React.FC<{ children?: React.ReactNode }> = () => {
-            renderCount++;
-            const [s, setS] = useState(true);
-            forceUpdate = () => setS(!s);
-            return (
-                <Provider container={() => {
-                    spy();
-                    const c = new Container();
-                    c.bind(Foo).toSelf();
-                    return c;
-                }}>
-                    <ChildComponent />
-                </Provider>
-            );
-        };
-
-        const tree: any = renderer.create(
-            <FunctionalRootComponent>
-                <ChildComponent />
-            </FunctionalRootComponent>
-        ).toJSON();
-
-        expect(renderCount).toBe(1);
-        expect(spy).toHaveBeenCalledTimes(1);
-        expect(tree.children).toEqual(['foo']);
-
-        renderer.act(forceUpdate);
-        expect(renderCount).toBe(2);
-        expect(spy).toHaveBeenCalledTimes(1);
     });
 });

@@ -1,7 +1,7 @@
 import { interfaces } from 'inversify';
-import { useContext, useRef } from 'react';
+import {useContext, useMemo, useRef} from 'react';
 
-import { InversifyReactContext } from './internal';
+import { InversifyReactContext, isDev } from './internal';
 
 /**
  * internal utility hook
@@ -38,8 +38,8 @@ export function useContainer<T>(resolve?: (container: interfaces.Container) => T
         );
     }
     return resolve
-        ? useLazyRef(() => resolve(container))
-        : container;
+        ? !isDev.v ? useLazyRef(() => resolve(container)) : useMemo(() => resolve(container), [container])
+      : container;
 }
 
 /**
@@ -48,6 +48,15 @@ export function useContainer<T>(resolve?: (container: interfaces.Container) => T
 export function useInjection<T>(serviceId: interfaces.ServiceIdentifier<T>): T {
     return useContainer(
         container => container.get<T>(serviceId)
+    );
+}
+
+/**
+ * Resolves named injection by id (once, at first render).
+ */
+export function useNamedInjection<T>(serviceId: interfaces.ServiceIdentifier<T>, name: string | number | symbol): T {
+    return useContainer(
+        container => container.getNamed<T>(serviceId, name)
     );
 }
 
@@ -75,6 +84,37 @@ export function useOptionalInjection<T, D>(
     return useContainer(
         container => container.isBound(serviceId)
             ? container.get(serviceId)
+            : resolveDefault(container)
+    );
+}
+
+// overload with default value resolver;
+// no restrictions on default `D` (e.g. `D extends T`) - freedom and responsibility of "user-land code"
+export function useOptionalNamedInjection<T, D>(
+    serviceId: interfaces.ServiceIdentifier<T>,
+    name: string | number | symbol,
+    // motivation:
+    // to guarantee that "choosing the value" process happens exactly once and
+    // to save users from potential bugs with naive `useOptionalInjection(...) ?? myDefault`;
+    // this callback will be executed only if binding is not found on container
+    resolveDefault: (container: interfaces.Container) => D
+): T | D;
+// overload without default value resolver
+export function useOptionalNamedInjection<T>(
+    serviceId: interfaces.ServiceIdentifier<T>,
+    name: string | number | symbol
+): T | undefined;
+/**
+ * Resolves injection if it's bound in container
+ */
+export function useOptionalNamedInjection<T, D>(
+    serviceId: interfaces.ServiceIdentifier<T>,
+    name: string | number | symbol,
+    resolveDefault: (container: interfaces.Container) => D | undefined = () => undefined
+): T | D | undefined {
+    return useContainer(
+        container => container.isBoundNamed(serviceId, name)
+            ? container.getNamed(serviceId, name)
             : resolveDefault(container)
     );
 }

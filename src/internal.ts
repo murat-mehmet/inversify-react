@@ -156,6 +156,8 @@ function createProperty(target: Component, name: string, type: interfaces.Servic
 	return descriptor;
 }
 
+const isDev = {v: false};
+
 export {
 	InversifyReactContext,
 	AdministrationKey,
@@ -163,4 +165,5 @@ export {
 	ensureAcceptContext,
 	createProperty, PropertyOptions,
 	getClassAdministration, getInstanceAdministration,
+	isDev,
 };
